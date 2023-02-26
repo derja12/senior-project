@@ -6,5 +6,4 @@ by Derek Jacketta
 
 1. FE with Vue/Vuetify
 2. BE with Node/Express
-3. API with python
-4. DB with MongoDB
+3. DB with MongoDB
