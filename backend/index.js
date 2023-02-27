@@ -1,30 +1,33 @@
-const express = require("express");
-const CORS = require("cors");
+const express = require('express');
+const CORS = require('cors');
 const fetch = require('node-fetch');
-const session = require("express-session");
-const passport = require("passport");
-const passportLocal = require("passport-local");
+const session = require('express-session');
+const passport = require('passport');
+const passportLocal = require('passport-local');
+
+const dotenv = require('dotenv');
+dotenv.config();
+
 const authorizeSpotify = require('./authorizeSpotify');
 const getAccessToken = require('./getAccessToken');
+const refreshAccessToken = require('./refreshAccessToken');
 const getRecentlyPlayed = require('./getRecentlyPlayed');
 const spotify = require('./credentials');
 
-const model = require("./model");
+const model = require('./model');
 const User = model.User;
-
-require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// const db = new Datastore();
+var tokens = {};
 
 app.use(express.urlencoded({extended: false}));
 app.use(CORS());
 
 // PASSPORT STUFF
 // Secret is a 'signiture' for cookies
-app.use(session({ secret: "p198n1f0198481hm209656565", resave: false, saveUninitialized: true }));
+app.use(session({ secret: 'p198n1f0198481hm209656565', resave: false, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -43,16 +46,16 @@ passport.use(new passportLocal.Strategy(
                     if (result) {
                         done(null, user);
                     } else {
-                        console.log("Failed Login: Wrong Password\n  [" + email +  "]\n");
+                        console.log('Failed Login: Wrong Password\n  [' + email +  ']\n');
                         done(null, false);
                     }
                 });
             } else {
-                console.log("Failed Login: User doesn't exist\n  [" + email + "]\n");
+                console.log('Failed Login: User doesn\'t exist\n  [' + email + ']\n');
                 done(null, false);
             }
         }).catch(function (err) {
-            console.log("Failed Login: findOne error\n  [" + email + "]\n");
+            console.log('Failed Login: findOne error\n  [' + email + ']\n');
             done(err);
         });
     }
@@ -70,7 +73,7 @@ passport.deserializeUser(function (userId, done) {
     });
 });
 
-app.get("/session", function (req, res) {
+app.get('/session', function (req, res) {
     if (req.user) {
         responseObject = {
             firstName: req.user.firstName,
@@ -82,14 +85,15 @@ app.get("/session", function (req, res) {
     }
 });
 
-app.post("/session", passport.authenticate("local"), function(req, res) {
-    console.log("User Logged in:", req.user.email, end="\n");
+app.post('/session', passport.authenticate('local'), function(req, res) {
+    console.log('User Logged in:', req.user.email, end='\n');
     res.sendStatus(201);
 });
 
-app.delete("/session", function(req, res) {
-    req.logout();
-    res.sendStatus(204);
+app.delete('/session', function(req, res) {
+    req.logout(() => {
+        res.sendStatus(204);
+    });
 });
 
 app.post('/users', (req, res) => {
@@ -100,12 +104,12 @@ app.post('/users', (req, res) => {
     });
     user.setEncryptedPassword(req.body.passwordText).then(() => {
         user.save().then(() => {
-            console.log("User created:", user);
-            res.status(201).send("created");
+            console.log('User created:', user);
+            res.status(201).send('created');
         }).catch((error) => {
             if (error.code == 11000) {
                 // email -> NOT UNIQUE
-                res.status(422).json({"email": "Email already in use"});
+                res.status(422).json({'email': 'Email already in use'});
                 return;
             }
             if (error.errors) {
@@ -113,60 +117,56 @@ app.post('/users', (req, res) => {
                 for (let e in error.errors) {
                     errorMessages[e] = error.errors[e].message;
                 }
-                if (req.body.passwordText == "") {
-                    errorMessages["password"] = "Please specify a password";
+                if (req.body.passwordText == '') {
+                    errorMessages['password'] = 'Please specify a password';
                 }
                 res.status(422).json(errorMessages);
             } else {
-                console.error("Error occured while creating a user:", error);
-                res.status(500).send("server error");
+                console.error('Error occured while creating a user:', error);
+                res.status(500).send('server error');
             }
         });    
     });    
 });
 
 app.get('/ping', async (_, res) => {
-    let ping = await fetch("http://localhost:8000/ping")
-    console.log(ping.statusText)
-    res.json({response_status: ping.statusText})
+    let ping = await fetch('http://localhost:8000/ping');
+    console.log(ping.statusText);
+    res.json({response_status: ping.statusText});
 });
 
-// app.get('/login', authorizeSpotify);
-// app.get('/callback', getAccessToken, (req, res, next) => {
-//     let token = req.credentials
-//     console.log("token inserted:", token)
-//     db.insert(token, err => {
-//       if (err) {
-//         next(err);
-//       } else {
-//         res.redirect(`/?authorized=true`);
-//       }
-//     });
-// });
+app.get('/auth', authorizeSpotify);
+app.get('/callback', getAccessToken, (req, res, next) => {
+    if (!req.user) {
+        res.sendStatus(401);
+        return;
+    }
 
-// app.get('/history', async (req, res) => {
-//     db.find({}, async (err, docs) => {
-//         if (err) {
-//             throw Error('Failed to retrieve documents');
-//         }
+    let token = req.credentials;
+    tokens[req.user._id] = token;
+    console.log('token inserted:', req.user, '->', token);
+    res.redirect('/?authorized=true');
+});
 
-//         const accessToken = docs[0].access_token;
-//         console.log("token", accessToken)
-//         try {
-//             let data = await getRecentlyPlayed(accessToken)
-//             console.log("data", data)
-            
-//             const arr = data.map(e => ({
-//                 played_at: e.played_at,
-//                 track_name: e.track.name,
-//             }));
+app.get('/history', async (req, res) => {
+    if (!req.user) {
+        res.sendStatus(401);
+        return;
+    }
 
-//             res.json(arr);
-//         } catch (e) {
-//             console.log(e)
-//         }
-//     });
-// });
+    // refresh token
+    tokens[req.user._id].access_token = await refreshAccessToken(tokens[req.user._id].refresh_token);
+
+    const accessToken = tokens[req.user._id].access_token;
+    try {
+        let data = await getRecentlyPlayed(accessToken);
+        console.log('data', data);
+        res.json(data);
+
+    } catch (error) {
+        console.log("could not get recently played:", error);
+    }
+});
 
 app.listen(port, () => {
     console.log(`Server listening -> PORT ${port}`);

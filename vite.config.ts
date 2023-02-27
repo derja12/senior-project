@@ -14,9 +14,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/ping': 'http://localhost:5000',
-      '/login': 'http://localhost:5000',
+      '/user': 'http://localhost:5000',
+      '/session': 'http://localhost:5000',
       '/callback': 'http://localhost:5000',
-      '/history': 'http://localhost:5000'
+      '/history': 'http://localhost:5000',
+      '/auth': 'http://localhost:5000',
     }
   }
 })

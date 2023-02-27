@@ -1,11 +1,11 @@
 const spotify = require('./credentials');
 var fetch = require('node-fetch');
-    
+
 const getAccessToken = async (req, _, next) => {
     if (req.query.code) {
         const url = 'https://accounts.spotify.com/api/token';
         const searchParams = new URLSearchParams();
-        console.log(req.query.code)
+
         searchParams.set('grant_type', 'authorization_code');
         searchParams.set('code', req.query.code);
         searchParams.set('redirect_uri', spotify.redirect_uri);
@@ -15,7 +15,7 @@ const getAccessToken = async (req, _, next) => {
         res = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: searchParams,
         })
