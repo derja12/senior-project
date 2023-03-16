@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const { Schema } = mongoose;
-mongoose.connect('mongodb+srv://daf:BigT3chBr0th3r@bettercluster.qntzaw0.mongodb.net/?retryWrites=true&w=majority');
+mongoose.connect('mongodb+srv://daf:' + process.env.MONGO_PASSWORD + '@bettercluster.qntzaw0.mongodb.net/?retryWrites=true&w=majority');
 
 const userSchema = new mongoose.Schema({
     firstName: {
