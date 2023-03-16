@@ -21,6 +21,7 @@ const refreshAccessToken = async (refresh_token) => {
             body: searchParams,
         })
         credentials = await response.json();
+        if ('error' in credentials || !credentials) { return credentials; }
         return credentials.access_token;
     } catch (error) {
         console.error("could not refresh token:", error);

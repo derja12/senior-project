@@ -21,10 +21,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, "Please specify a password"]
     },
-    accessToken: {
+    refreshToken: {
         type: String
-    }
-})
+    },
+    listens: [{ type: Schema.Types.ObjectId, ref: 'listen' }]
+});
 
 userSchema.methods.setEncryptedPassword = function (passwordText) {
     // CREATE A PROMISE
@@ -59,7 +60,43 @@ userSchema.methods.verifyPassword = function (passwordText) {
 };
 
 const User = mongoose.model("user", userSchema);
+const Listen = mongoose.model('listen', {
+    track_uri: String,
+    // track: { 
+    //     type: Schema.Types.ObjectId, 
+    //     ref: 'track'
+    // },
+    played_at: Number,
+    context_uri: String,
+    // context: {
+    //     type: Schema.Types.ObjectId,
+    //     ref: 'context'
+    // }
+});
+// const Track = mongoose.model('track', {
+//     album: {
+//         type: Schema.Types.ObjectId,
+//         ref: 'album'
+//     },
+//     artists: [{
+//         type: Schema.Types.ObjectId,
+//         ref: 'artist'
+//     }],
+//     disc_number: {type: Number},
+//     duration_ms: {type: Number},
+//     explicit: {type: bool},
+//     external_ids: {type: Schema.Types.Mixed},
+//     href: {type: String},
+//     id: {
+//         type: String, 
+//         unique: true
+//     },
+//     is_local: {Type: bool},
+//     ...
+// })
+
 
 module.exports = {
-    User: User
+    User: User,
+    Listen: Listen
 };
