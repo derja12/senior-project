@@ -1,3 +1,5 @@
+const { User } = require('../mongo/model');
+
 const postUser = (req, res) => {
     var user = new User({
         firstName: req.body.firstName,

@@ -206,7 +206,7 @@ let interval = setInterval(async () => {
         // console.log(updated);
         // clearInterval(interval);
     }
-}, 5000); // 3600000); // once every hour
+}, 360000); // once every hour
 
 app.listen(port, () => {
     console.log(`Server listening -> PORT ${port}`);

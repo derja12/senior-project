@@ -22,19 +22,16 @@ export default {
                     }
                 });
                 if (response.status == 201) {
-                    this.$router.push('/')
+                    this.$router.push('/');
                 } else {
-                    console.log("failed to log in:", response.statusText);
+                    console.error("failed to log in:", response.statusText);
                 }
             } catch (error) {
-                console.log("failed to log in:", error)
+                console.error("failed to log in:", error);
             }
         },
-        async signupDaF() {
-            let response = await fetch('http://localhost:5173/signup');
-            let data = await response.json();
-            console.log(data.url);
-            window.location.href = data.url;
+        async sendToRegister() {
+            this.$router.push('/register');
         }
     },
     async mounted() {
@@ -76,7 +73,7 @@ export default {
                     <!-- sign up buttons -->
                     <v-container>
                         Don't have an account? 
-                        <v-btn variant="plain" class="mx-n2 text-teal-lighten-2" @click="signupDaF">
+                        <v-btn variant="plain" class="mx-n2 text-teal-lighten-2" @click="sendToRegister">
                             Sign Up
                         </v-btn>
                     </v-container>
