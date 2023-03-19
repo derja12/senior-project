@@ -7,7 +7,8 @@ export default {
             isAuthorized: false,
             user: {
                 email: '',
-                firstname: '',
+                firstName: '',
+                spotifyConnected: false,
             },
         }
     },
@@ -16,8 +17,9 @@ export default {
             try {
                 let getSessionRes = await fetch(ROOT_URL + '/session', {credentials: 'include'})
                 if (getSessionRes.status == 200) {
-                    this.isLoggedIn = true
-                    this.user = await getSessionRes.json()
+                    this.isLoggedIn = true;
+                    this.user = await getSessionRes.json();
+                    console.log(this.user);
                 }
             } catch (error) {
                 console.log('unable to get session:', error)
@@ -73,26 +75,27 @@ export default {
         <v-app-bar class='bg-grey-darken-4 text-teal-lighten-2'>
             <v-toolbar-title>DaF Reports</v-toolbar-title>
             
-            <v-spacer></v-spacer>
-            
-            <div v-show='isLoggedIn' class='mx-4'>
-                Logged in as {{ user.email }}
-                
-                <div @click='logout'>Logout</div>
+            <v-spacer/>
+
+            <div v-show='isLoggedIn' class='mx-4 d-flex flex-column justify-end'>
+                <div class="mt-1">Welcome, {{ user.firstName }}!</div>
+                <v-btn variant="plain" class='pa-0 my-0 ml-auto' @click='logout'>Logout</v-btn>
             </div>
         </v-app-bar>
 
         <v-main>
-            <v-container class='elevation-2 h-100 d-flex justify-center'>
-                <v-btn v-if='!isAuthorized' variant='outlined' @click='authorizeSpotify'>
-                    Connect Spotify
-                </v-btn>
-
-                <div v-else>
+            <v-container class='elevation-2 h-100 d-flex flex-column'>
+                <v-container v-if='!user.spotifyConnected' class="d-flex flex-column align-center">
+                    <div class="mb-2">Connect Your Spotify Account to get started!</div>
+                    <v-btn variant='outlined' @click='authorizeSpotify'>
+                        Connect
+                    </v-btn>
+                </v-container>
+                <v-container v-else class="d-flex flex-column align-center">
                     <v-btn variant='outlined' @click='getHistory'>
                         Get History
                     </v-btn>
-                </div>
+                </v-container>
             </v-container>
         </v-main>
     </v-app>

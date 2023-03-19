@@ -80,6 +80,7 @@ app.get('/session', function (req, res) {
         responseObject = {
             firstName: req.user.firstName,
             email: req.user.email,
+            spotifyConnected: req.user.refresh_token != "",
         }
         res.json(responseObject);
     } else {
@@ -158,7 +159,7 @@ let interval = setInterval(async () => {
 
         // console.log('user:', user);
 
-        // refresh token
+        // refresh access token
         let accessToken = await refreshAccessToken(user.refreshToken);
         if ((typeof accessToken == Object && 'error' in accessToken) || !accessToken) { 
             console.error("unable to fetch history:", accessToken);
@@ -206,7 +207,7 @@ let interval = setInterval(async () => {
         // console.log(updated);
         // clearInterval(interval);
     }
-}, 360000); // once every hour
+}, 3600000); // once every hour
 
 app.listen(port, () => {
     console.log(`Server listening -> PORT ${port}`);

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const { Schema } = mongoose;
 mongoose.connect('mongodb+srv://daf:' + process.env.MONGO_PASSWORD + '@bettercluster.qntzaw0.mongodb.net/?retryWrites=true&w=majority');
 
