@@ -8,8 +8,6 @@ const getRecentlyPlayed = async (accessToken, after) => {
     }
     url += "limit=50";
 
-    console.log(url);
-
     let res = await fetch(url, {
         method: 'GET',
         headers: {

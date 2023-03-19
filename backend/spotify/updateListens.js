@@ -48,19 +48,28 @@ const updateListens = async () => {
         for (let j in history) {
             let full_listen = history[j];
 
-            let listen = new Listen({
-                track_uri: full_listen.track.uri,
-                played_at: Date.parse(full_listen.played_at),
-                context_uri: full_listen.context.uri
-            })
-            let created = await listen.save();
-            if (created != listen) {
-                console.error("unable to save listen:", listen, "\ncreated:", created);
-            } else {   
-                user.listens.push(created);
+            try {
+                let context_uri;
+                if (full_listen.context) {
+                    context_uri = full_listen.context.uri;
+                }
 
-                let at = new Date(full_listen.played_at);
-                console.log(full_listen.track.name, at.toUTCString(), full_listen.context.type);
+                let listen = new Listen({
+                    track_uri: full_listen.track.uri,
+                    played_at: Date.parse(full_listen.played_at),
+                    context_uri: context_uri
+                })
+                let created = await listen.save();
+                if (created != listen) {
+                    console.error("unable to save listen:", listen, "\ncreated:", created);
+                } else {   
+                    user.listens.push(created);
+
+                    let at = new Date(full_listen.played_at);
+                    console.log(full_listen.track.name, at.toUTCString(), full_listen.context.type);
+                }
+            } catch (error) {
+                console.error("unable to insert track:", full_listen, "\nError:", error);
             }
         }
         let updated = await user.save();

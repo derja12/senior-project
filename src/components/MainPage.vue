@@ -9,6 +9,7 @@ export default {
                 firstName: '',
                 spotifyConnected: false,
             },
+            history: []
         }
     },
     methods: {
@@ -42,14 +43,10 @@ export default {
         async authorizeSpotify() {
             try {
                 let response = await fetch(ROOT_URL + '/auth');
-                if (response.status == 200) {
-                    let getSessionRes = await fetch(ROOT_URL + '/session', {credentials: 'include'})
-                    if (getSessionRes.status == 200) {
-                        this.user = await getSessionRes.json();
-                    }
-                } else {
-                    console.error('unable to authorize spotify:', response.statusText)
-                }
+
+                // send to spotify authorization page
+                let data = await response.json();
+                window.location.href = data.url;
             } catch (error) {
                 console.error('unable to authorize spotify:', error)
             }
@@ -59,7 +56,8 @@ export default {
                 let response = await fetch(ROOT_URL + '/history');
                 let data = await response.json();
 
-                console.log('history:', data);
+                this.history = data;
+                console.log(this.history);
             } catch (error) {
                 console.log('unable to get history:', error)
             }
@@ -67,9 +65,6 @@ export default {
     },
     mounted() {
         this.login();
-        const urlParams = new URLSearchParams(window.location.search);
-        this.isAuthorized = urlParams.has('authorized');
-        console.log('authorized', this.isAuthorized)
     }
 }
 </script>
@@ -88,17 +83,43 @@ export default {
         </v-app-bar>
 
         <v-main>
-            <v-container class='elevation-2 h-100 d-flex flex-column'>
+            <v-container class='elevation-2 my-0 py-0 h-100 d-flex flex-column'>
                 <v-container v-if='!user.spotifyConnected' class="d-flex flex-column align-center">
                     <div class="mb-2">Connect Your Spotify Account to get started!</div>
                     <v-btn variant='outlined' @click='authorizeSpotify'>
                         Connect
                     </v-btn>
                 </v-container>
-                <v-container v-else class="d-flex flex-column align-center">
-                    <v-btn variant='outlined' @click='getHistory'>
-                        Get History
-                    </v-btn>
+                <v-container v-else class="d-flex my-0 py-0 flex-column align-center">
+                    <v-sheet :border="true" class="rounded-b w-50 pa-4 d-flex justify-center">
+                        <v-btn 
+                            variant='outlined'
+                            @click='getHistory'>
+                            Get History
+                        </v-btn>
+                    </v-sheet>
+                    <v-container class="">
+                        <v-card
+                            v-for="listen in history" 
+                            variant="plain"
+                            class="w-50 mx-auto my-1 d-flex align-start"
+                            :border="true"
+                            elevation="1"
+                            >
+                            <div class="ma-0 pa-0">
+                                <img
+                                    :src="listen.track.album.images[0].url"
+                                    width="75"
+                                    height="75"
+                                    class="ma-0 pa-0 d-block"
+                                >
+                            </div>
+                            <v-sheet class="d-inline-flex flex-column ma-1 my-auto">
+                                <h3>{{ listen.track.name }}</h3>
+                                <p>{{ listen.track.artists[0].name }} - {{ listen.track.album.name }}</p>
+                            </v-sheet>
+                        </v-card>
+                    </v-container>
                 </v-container>
             </v-container>
         </v-main>

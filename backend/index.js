@@ -26,7 +26,7 @@ const Listen = model.Listen;
 const app = express();
 const port = process.env.PORT || 3000;
 
-var tokens = {};
+// var tokens = {};
 
 app.use(express.urlencoded({extended: false}));
 app.use(CORS());
@@ -113,16 +113,11 @@ app.get('/callback', getAccessToken, async (req, res, next) => {
         return;
     }
 
-    // store access token in memory
-    let token = req.credentials;
-    tokens[req.user._id] = token;
-
     // update refresh token in db
     let update = await User.updateOne({ _id: req.user._id }, { refreshToken: token.refresh_token })
 
-    console.log('token inserted:', req.user, '->', token);
-
-    res.redirect('/?authorized=true');
+    console.log('token inserted:', req.user.email, '->', token);
+    res.redirect('/');
 });
 app.get('/history', async (req, res) => {
     if (!req.user) {
@@ -131,12 +126,9 @@ app.get('/history', async (req, res) => {
     }
 
     // refresh token
-    tokens[req.user._id].access_token = await refreshAccessToken(tokens[req.user._id].refresh_token);
-
-    const accessToken = tokens[req.user._id].access_token;
+    const accessToken  = await refreshAccessToken(req.user.refreshToken);
     try {
         let data = await getRecentlyPlayed(accessToken);
-        console.log('data', data);
         res.json(data);
 
     } catch (error) {
