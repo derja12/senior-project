@@ -4,7 +4,6 @@ export default {
     data() {
         return {
             isLoggedIn: false,
-            isAuthorized: false,
             user: {
                 email: '',
                 firstName: '',
@@ -19,7 +18,6 @@ export default {
                 if (getSessionRes.status == 200) {
                     this.isLoggedIn = true;
                     this.user = await getSessionRes.json();
-                    console.log(this.user);
                 }
             } catch (error) {
                 console.log('unable to get session:', error)
@@ -44,10 +42,16 @@ export default {
         async authorizeSpotify() {
             try {
                 let response = await fetch(ROOT_URL + '/auth');
-                let data = await response.json();
-                window.location.href = data.url;
+                if (response.status == 200) {
+                    let getSessionRes = await fetch(ROOT_URL + '/session', {credentials: 'include'})
+                    if (getSessionRes.status == 200) {
+                        this.user = await getSessionRes.json();
+                    }
+                } else {
+                    console.error('unable to authorize spotify:', response.statusText)
+                }
             } catch (error) {
-                console.log('unable to authorize spotify:', error)
+                console.error('unable to authorize spotify:', error)
             }
         },
         async getHistory() {
