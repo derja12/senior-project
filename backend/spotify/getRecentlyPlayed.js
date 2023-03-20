@@ -1,5 +1,7 @@
 const fetch = require('node-fetch');
 
+const getTrackData = require('./getTrackData');
+
 const getRecentlyPlayed = async (accessToken, after) => {
     let url = 'https://api.spotify.com/v1/me/player/recently-played?';
 
@@ -19,6 +21,13 @@ const getRecentlyPlayed = async (accessToken, after) => {
 
     let data = await res.json();
     if ('error' in data || !data) { return data; }
+
+    // get track data for each track
+    for (i in data.items) {
+        let cTrack = await getTrackData(accessToken, data.items[i].track.uri);
+        data.items[i].track = cTrack;
+    }
+
     return data.items;
 };
 
