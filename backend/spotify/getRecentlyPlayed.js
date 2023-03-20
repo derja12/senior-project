@@ -22,6 +22,11 @@ const getRecentlyPlayed = async (accessToken, after) => {
     let data = await res.json();
     if ('error' in data || !data) { return data; }
 
+    // fill in cache (order/list messes up if not. Investigate???)
+    for (i in data.items) {
+        await getTrackData(accessToken, data.items[i].track.uri);
+    }
+    
     // get track data for each track
     for (i in data.items) {
         let cTrack = await getTrackData(accessToken, data.items[i].track.uri);
