@@ -81,7 +81,7 @@ app.get('/session', function (req, res) {
         responseObject = {
             firstName: req.user.firstName,
             email: req.user.email,
-            spotifyConnected: req.user.refresh_token != "",
+            spotifyConnected: Boolean(req.user.refreshToken),
         }
         res.json(responseObject);
     } else {
@@ -114,9 +114,9 @@ app.get('/callback', getAccessToken, async (req, res, next) => {
     }
 
     // update refresh token in db
-    let update = await User.updateOne({ _id: req.user._id }, { refreshToken: token.refresh_token })
+    let update = await User.updateOne({ _id: req.user._id }, { refreshToken: req.credentials.refresh_token })
 
-    console.log('token inserted:', req.user.email, '->', token);
+    console.log('token inserted:', req.user.email, '->', req.credentials);
     res.redirect('/');
 });
 app.get('/history', async (req, res) => {
