@@ -20,15 +20,19 @@ const updateListens = async () => {
 
     for (let i in users) {
         let user = users[i]
+        if (!user.refreshToken) {
+            console.log("Skipping user w/out refresh token:", user.email);
+            continue;
+        }
 
         // console.log('user:', user);
 
         // refresh access token
         let accessToken = await refreshAccessToken(user.refreshToken);
-        if ((typeof accessToken == Object && 'error' in accessToken) || !accessToken) { 
+        if ((typeof accessToken == Object && 'error' in accessToken) || !accessToken) {
             console.error("unable to fetch history:", accessToken);
         }
-        console.log('accessToken:', accessToken);
+        // console.log('accessToken:', accessToken);
 
         // get most recent listen
         let lastListenedAt = 0;
@@ -40,11 +44,13 @@ const updateListens = async () => {
 
         // get recently played
         let history = await getRecentlyPlayed(accessToken, lastListenedAt);
-        if ((typeof accessToken == Object && 'error' in history) || !history) { 
-            console.error("unable to fetch history:", history);
+        if (history.hasOwnProperty('error') || !history) { 
+            console.error("unable to fetch history for", user.email, ":", history);
+            continue;
         }
 
         // iterate over history
+        let count = 0;
         for (let j in history) {
             let full_listen = history[j];
 
@@ -64,9 +70,7 @@ const updateListens = async () => {
                     console.error("unable to save listen:", listen, "\ncreated:", created);
                 } else {   
                     user.listens.push(created);
-
-                    let at = new Date(full_listen.played_at);
-                    console.log(full_listen.track.name, at.toUTCString(), full_listen.context.type);
+                    count++;
                 }
             } catch (error) {
                 console.error("unable to insert track:", full_listen, "\nError:", error);
@@ -76,6 +80,8 @@ const updateListens = async () => {
         if (updated != user) {
             console.error("unable to update user:", user, "\nupdated:", updated);
         }
+
+        console.log("Saved %d new listens for user: %s", count, user.email);
 
         // console.log(updated);
         // clearInterval(interval);
