@@ -1,4 +1,5 @@
 const express = require('express');
+const CORS = require('cors');
 const fetch = require('node-fetch');
 const session = require('express-session');
 const passport = require('passport');
@@ -27,8 +28,11 @@ const port = process.env.PORT || 3000;
 
 // var tokens = {};
 
-app.use(express.static('ui/dist')); // tells the server to host
+// app.use(express.static('ui/dist')); // tells the server to host
 app.use(express.urlencoded({extended: false}));
+app.use(CORS({
+    origin: 'https://derja12.github.io'
+}));
 
 // #region Passport stuff
 // Secret is a 'signiture' for cookies

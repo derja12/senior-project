@@ -1,5 +1,5 @@
 <script lang='ts'>
-const ROOT_URL = 'http://localhost:8080';
+const ROOT_URL = 'https://cer8phtgvw.us-east-2.awsapprunner.com';
 
 interface user {
     email: string;
