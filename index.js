@@ -18,6 +18,7 @@ const postUser = require('./users/postUser');
 const userHelper = require('./users/userHelpers');
 
 const ping = require('./misc/ping');
+const pong = require('./misc/pong');
 
 const model = require('./mongo/model');
 const User = model.User;
@@ -107,7 +108,7 @@ app.delete('/session', function(req, res) {
 
 app.post('/users', postUser);
 
-app.get('/', ping);
+app.get('/', pong);
 app.get('/ping', ping);
 
 app.get('/auth', authorizeSpotify);
