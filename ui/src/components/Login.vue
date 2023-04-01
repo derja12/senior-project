@@ -1,6 +1,6 @@
 <script lang="ts">
 import { stringifyExpression } from '@vue/compiler-core';
-const ROOT_URL = 'http://localhost:5173';
+const ROOT_URL = 'http://localhost:5000';
 
 export default {
     data(){

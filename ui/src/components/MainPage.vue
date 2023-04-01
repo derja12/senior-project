@@ -1,16 +1,64 @@
 <script lang='ts'>
-const ROOT_URL = 'http://localhost:5173';
+const ROOT_URL = 'http://localhost:5000';
+
+interface user {
+    email: string;
+    firstName: string;
+    spotifyConnected: boolean;
+};
+
+interface dataRet {
+    isLoggedIn: boolean;
+    user: user;
+    history: listen[];
+};
+
+interface image {
+    height: number;
+    width: number;
+    url: string;
+};
+
+interface album {
+    uri: string;
+    total_tracks: number;
+    images: image[];
+    name: string;
+};
+
+interface artist {
+    uri: string;
+    name: string;
+}
+
+interface track {
+    album: album;
+    artists: artist[];
+    duration_ms: number;
+    name: string;
+    popularity: number;
+    track_number: number;
+    uri: string;
+};
+
+interface listen {
+    track: track;
+    played_at: number;
+    context_uri: string;
+};
+
 export default {
     data() {
-        return {
+        let d:dataRet =  {
             isLoggedIn: false,
             user: {
                 email: '',
                 firstName: '',
                 spotifyConnected: false,
             },
-            history: []
+            history: [],
         }
+        return d
     },
     methods: {
         async login() {
