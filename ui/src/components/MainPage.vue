@@ -1,5 +1,5 @@
 <script lang='ts'>
-const ROOT_URL = 'http://localhost:5000';
+const ROOT_URL = 'http://localhost:8080';
 
 interface user {
     email: string;
