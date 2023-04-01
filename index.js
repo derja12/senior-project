@@ -107,6 +107,7 @@ app.delete('/session', function(req, res) {
 
 app.post('/users', postUser);
 
+app.get('/', ping);
 app.get('/ping', ping);
 
 app.get('/auth', authorizeSpotify);
