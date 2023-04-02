@@ -32,7 +32,7 @@ const updateListens = async () => {
         if ((typeof accessToken == Object && 'error' in accessToken) || !accessToken) {
             console.error("unable to fetch history:", accessToken);
         }
-        // console.log('accessToken:', accessToken);
+        console.log('accessToken:', accessToken);
 
         // get most recent listen
         let lastListenedAt = 0;

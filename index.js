@@ -12,7 +12,9 @@ const authorizeSpotify = require('./spotify/authorizeSpotify');
 const getAccessToken = require('./spotify/getAccessToken');
 const refreshAccessToken = require('./spotify/refreshAccessToken');
 const getRecentlyPlayed = require('./spotify/getRecentlyPlayed');
-const updateListens = require('./spotify/updateListens')
+const updateListens = require('./spotify/updateListens');
+
+const listSongs = require('./songs/listSongs');
 
 const postUser = require('./users/postUser');
 const userHelper = require('./users/userHelpers');
@@ -31,6 +33,7 @@ const port = process.env.PORT || 3000;
 
 app.use(express.static('ui/dist')); // tells the server to host
 app.use(express.urlencoded({extended: false}));
+app.use(express.json());
 app.use(CORS({
     origin: 'https://derja12.github.io'
 }));
@@ -141,8 +144,11 @@ app.get('/history', async (req, res) => {
     }
 });
 
-updateListens()
-setInterval(updateListens, 3600000); // once every hour
+
+app.get('/songs', listSongs);
+
+// updateListens()
+// setInterval(updateListens, 3600000); // once every hour
 
 app.listen(port, () => {
     console.log(`Server listening -> PORT ${port}`);
