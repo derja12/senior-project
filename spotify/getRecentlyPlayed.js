@@ -27,7 +27,15 @@ const getRecentlyPlayed = async (accessToken, after) => {
         uris.push(data.items[i].track.uri);
     }
     let cTracks = await getBulkTrackData(accessToken, uris);
-    return cTracks;
+    for (i in cTracks) {
+        let track = cTracks[i];
+        for (j in data.items) {
+            if (data.items[j].track.uri == track.uri) {
+                data.items[j].track = track;
+            }
+        }
+    }
+    return data.items;
 };
 
 module.exports = getRecentlyPlayed;

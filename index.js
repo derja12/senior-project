@@ -147,8 +147,10 @@ app.get('/history', async (req, res) => {
 
 app.get('/songs', listSongs);
 
-// updateListens()
-// setInterval(updateListens, 3600000); // once every hour
+if (process.env.UPDATE_LISTENS === "true") {
+    updateListens()
+    setInterval(updateListens, 3600000); // once every hour
+}
 
 app.listen(port, () => {
     console.log(`Server listening -> PORT ${port}`);
