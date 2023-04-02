@@ -1,6 +1,6 @@
 <script lang="ts">
-import { stringifyExpression } from '@vue/compiler-core';
-const ROOT_URL = 'https://cer8phtgvw.us-east-2.awsapprunner.com';
+const ROOT_URL = 'http://localhost:5173';
+// const ROOT_URL = 'https://cer8phtgvw.us-east-2.awsapprunner.com';
 
 export default {
     data(){

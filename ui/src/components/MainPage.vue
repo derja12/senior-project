@@ -1,5 +1,6 @@
 <script lang='ts'>
-const ROOT_URL = 'https://cer8phtgvw.us-east-2.awsapprunner.com';
+const ROOT_URL = 'http://localhost:5173';
+// const ROOT_URL = 'https://cer8phtgvw.us-east-2.awsapprunner.com';
 
 interface user {
     email: string;
@@ -129,7 +130,17 @@ export default {
                 <v-btn variant="plain" class='pa-0 my-0 ml-auto' @click='logout'>Logout</v-btn>
             </div>
         </v-app-bar>
+        <v-navigation-drawer expand-on-hover rail>
+            <v-list>
+                <v-list-item title="Tracks" value="tracks" prepend-icon="mdi-music"></v-list-item>
 
+                <v-list-item title="Albums" value="albums" prepend-icon="mdi-album"></v-list-item>
+
+                <v-list-item title="Artists" value="artists" prepend-icon="mdi-account"></v-list-item>
+
+                <v-list-item title="History" value="settings" prepend-icon="mdi-folder-music"></v-list-item>
+            </v-list>
+        </v-navigation-drawer>
         <v-main>
             <v-container class='elevation-2 my-0 py-0 h-100 d-flex flex-column'>
                 <v-container v-if='!user.spotifyConnected' class="d-flex flex-column align-center">
