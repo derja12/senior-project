@@ -19,6 +19,7 @@ export default defineConfig({
       '/callback': 'http://localhost:5000',
       '/history': 'http://localhost:5000',
       '/auth': 'http://localhost:5000',
+      '/tracks': 'http://localhost:5000',
     }
   }
 })

@@ -2,6 +2,26 @@
 const ROOT_URL = 'http://localhost:5173';
 // const ROOT_URL = 'https://cer8phtgvw.us-east-2.awsapprunner.com';
 
+enum list_option {
+    TRACK_COUNT = 1,
+    TRACK_TIME,
+    TRACK_ALPHABETICAL,
+    ARTIST_ALPHABETICAL,
+    ALBUM_ALPHABETICAL,
+};
+
+interface ListTracksRequest {
+    list_by: list_option;
+    page_size: number;
+    page_num: number;
+    time_filter: TimeFilter;
+};
+
+interface TimeFilter {
+    start_time: number;
+    end_time: number;
+};
+
 interface user {
     email: string;
     firstName: string;
@@ -12,6 +32,8 @@ interface dataRet {
     isLoggedIn: boolean;
     user: user;
     history: listen[];
+    tracks: track[];
+    nav: string;
 };
 
 interface image {
@@ -40,6 +62,7 @@ interface track {
     popularity: number;
     track_number: number;
     uri: string;
+    listens?: number;
 };
 
 interface listen {
@@ -58,10 +81,15 @@ export default {
                 spotifyConnected: false,
             },
             history: [],
+            tracks: [],
+            nav: "tracks",
         }
         return d
     },
     methods: {
+        test() {
+            console.log(this.nav);
+        },
         async login() {
             try {
                 let getSessionRes = await fetch(ROOT_URL + '/session', {credentials: 'include'})
@@ -108,7 +136,20 @@ export default {
                 this.history = data;
                 console.log(this.history);
             } catch (error) {
-                console.log('unable to get history:', error)
+                console.log('unable to get history:', error);
+            }
+        },
+        async getTracks() {
+            let params:string = "";
+            params += "?list_by=" + encodeURIComponent(list_option.TRACK_COUNT);
+            params += "&page_size=" + encodeURIComponent(10);
+            try {
+                let response = await fetch(ROOT_URL + '/tracks' + params);
+                if (response.ok) {
+                    this.tracks = await response.json()
+                }
+            } catch (error) {
+                console.log('unable to get tracks:', error);
             }
         }
     },
@@ -130,15 +171,15 @@ export default {
                 <v-btn variant="plain" class='pa-0 my-0 ml-auto' @click='logout'>Logout</v-btn>
             </div>
         </v-app-bar>
-        <v-navigation-drawer expand-on-hover rail>
+        <v-navigation-drawer v-if='user.spotifyConnected' @click.select="test" expand-on-hover rail>
             <v-list>
-                <v-list-item title="Tracks" value="tracks" prepend-icon="mdi-music"></v-list-item>
+                <v-list-item title="Tracks" value="tracks" prepend-icon="mdi-music" @click="nav = 'tracks'"></v-list-item>
 
-                <v-list-item title="Albums" value="albums" prepend-icon="mdi-album"></v-list-item>
+                <v-list-item title="Albums" value="albums" prepend-icon="mdi-album" @click="nav = 'albums'"></v-list-item>
 
-                <v-list-item title="Artists" value="artists" prepend-icon="mdi-account"></v-list-item>
+                <v-list-item title="Artists" value="artists" prepend-icon="mdi-account" @click="nav = 'artists'"></v-list-item>
 
-                <v-list-item title="History" value="settings" prepend-icon="mdi-folder-music"></v-list-item>
+                <v-list-item title="History" value="settings" prepend-icon="mdi-folder-music" @click="nav = 'history'"></v-list-item>
             </v-list>
         </v-navigation-drawer>
         <v-main>
@@ -149,7 +190,39 @@ export default {
                         Connect
                     </v-btn>
                 </v-container>
-                <v-container v-else class="d-flex my-0 py-0 flex-column align-center">
+                <v-container v-else-if="nav == 'tracks'" class="d-flex my-0 py-0 flex-column align-center">
+                    <v-sheet :border="true" class="rounded-b w-50 pa-4 d-flex justify-center">
+                        <v-btn 
+                            variant='outlined'
+                            @click='getTracks'>
+                            Get Tracks
+                        </v-btn>
+                    </v-sheet>
+                    <v-container class="">
+                        <v-card
+                            v-for="track in tracks" 
+                            variant="plain"
+                            class="w-50 mx-auto my-1 d-flex align-start"
+                            :border="true"
+                            elevation="1"
+                            >
+                            <div class="ma-0 pa-0">
+                                <img
+                                    :src="track.album.images[0].url"
+                                    width="75"
+                                    height="75"
+                                    class="ma-0 pa-0 d-block"
+                                >
+                            </div>
+                            <v-sheet class="d-inline-flex flex-column ma-1 my-auto">
+                                <h3>{{ track.name }}</h3>
+                                <p>{{ track.artists[0].name }} - {{ track.album.name }}</p>
+                                <p>{{ track.listens }} listens</p>
+                            </v-sheet>
+                        </v-card>
+                    </v-container>
+                </v-container>
+                <v-container v-else-if="nav == 'history'" class="d-flex my-0 py-0 flex-column align-center">
                     <v-sheet :border="true" class="rounded-b w-50 pa-4 d-flex justify-center">
                         <v-btn 
                             variant='outlined'
@@ -180,6 +253,7 @@ export default {
                         </v-card>
                     </v-container>
                 </v-container>
+                <v-container v-else></v-container>
             </v-container>
         </v-main>
     </v-app>
