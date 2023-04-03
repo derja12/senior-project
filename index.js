@@ -14,7 +14,7 @@ const refreshAccessToken = require('./spotify/refreshAccessToken');
 const getRecentlyPlayed = require('./spotify/getRecentlyPlayed');
 const updateListens = require('./spotify/updateListens');
 
-const listSongs = require('./songs/listSongs');
+const listTracks = require('./tracks/listTracks');
 
 const postUser = require('./users/postUser');
 const userHelper = require('./users/userHelpers');
@@ -145,7 +145,7 @@ app.get('/history', async (req, res) => {
 });
 
 
-app.get('/songs', listSongs);
+app.get('/tracks', listTracks);
 
 if (process.env.UPDATE_LISTENS === "true") {
     updateListens()
