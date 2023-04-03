@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const session = require('express-session');
 const passport = require('passport');
 const passportLocal = require('passport-local');
-const history = require('connect-history-api-fallback');
+// const history = require('connect-history-api-fallback');
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -31,7 +31,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static('ui/dist')); // tells the server to host
-app.use(history());
+// app.use(history());
 app.use(express.urlencoded({extended: false}));
 app.use(express.json());
 app.use(CORS({
