@@ -28,8 +28,12 @@ interface TimeFilter {
 const TRACK_COUNT            = 1
 const TRACK_TIME             = 2
 const TRACK_ALPHABETICAL     = 3
-const ARTIST_ALPHABETICAL   = 4
-const ALBUM_ALPHABETICAL    = 5
+const ARTIST_ALPHABETICAL    = 4
+const ALBUM_ALPHABETICAL     = 5
+
+const ALBUM_CONTEXT          = "album"
+const PLAYLIST_CONTEXT       = "playlist"
+const CONTEXT_FREE           = "context_free"
 
 const listTracks = async (req, res) => {
     if (!req.user) {
@@ -50,49 +54,128 @@ const listTracks = async (req, res) => {
         path: 'listens'
     }).exec();
 
+    // filter out contexts
+    let contexts = request.contexts.split(',');
+    let contextsKept = {'playlist': false, 'album': false, 'none': false}
+    for (let i = 0; i < contexts.length; i++) {
+        switch (contexts[i]) {
+        case ALBUM_CONTEXT:
+            contextsKept['album'] = true;
+            continue;
+        case PLAYLIST_CONTEXT:
+            contextsKept['playlist'] = true;
+            continue;
+        case CONTEXT_FREE:
+            contextsKept['none'] = true;
+            continue;
+        default:
+            console.log("list tracks invalid context value given:", contexts[i]);
+        }
+    }
+    let filtered_listens = [];
+    let contextFree = 0;
+    let playlist = 0;
+    let album = 0;
+    for (let i = 0; i < user.listens.length; i++) {
+        let listen = user.listens[i];
+        // include context free?
+        if (!listen.context_uri) {
+            if (contextsKept['none']) {
+                contextFree++;
+                filtered_listens.push(listen);
+            }
+            continue;
+        }
+        let context = listen.context_uri.split(':')[1];
+        // include playlists?
+        if (context == "playlist") {
+            if (contextsKept['playlist']) {
+                playlist++;
+                filtered_listens.push(listen);
+            }
+            continue;
+        }
+        // include albums?
+        if (context == "album") {
+            if (contextsKept['album']) {   
+                album++
+                filtered_listens.push(listen);
+            }
+            continue;
+        }
+        // not found? include if context free
+        if (contextsKept['none']) {
+            contextFree++;
+            filtered_listens.push(listen);
+        }
+    }
+    // console.log(contextFree, "context free listens");
+    // console.log(playlist, "playlist listens");
+    // console.log(album, "album listens");
+
+    // reassign user listens to filtered list
+    user.listens = filtered_listens;
+
     // condense listens to map and list
     let listen_map = {};
     for (let i = 0; i < user.listens.length; i++) {
-        let uri = user.listens[i].track_uri;
+        let listen = user.listens[i]
+        let uri = listen.track_uri;
 
         if (!(uri in listen_map)) {
-            listen_map[uri] = 0
+            listen_map[uri] = {
+                track: null,
+                played_at: listen.played_at,
+                context_uri: listen.context_uri,
+                count: 0
+            }
         }
 
-        listen_map[uri]++;
+        listen_map[uri].count++;
     }
 
     // getTrackData for each listen ([uri] -> track)
     let dataMap = await mapUriToTrackData(user, listen_map);
+    let uris = Object.keys(dataMap);
+    for (let i = 0; i < uris.length; i++) {
+        let uri = uris[i];
+        listen_map[uri].track = dataMap[uri];
+    }
 
-    // create array with order specified
+    // create array of listens
+    let listens = Object.values(listen_map);
+
+    // sort listens and return request
     switch (request.list_by) {
     case TRACK_COUNT:
-        let tracks = Object.values(dataMap);
-        tracks.sort(sortByCount);
-        page_start = Math.min((request.page_num-1)*request.page_size, tracks.length-1);
-        page_end = Math.min(request.page_num*request.page_size, tracks.length-1);
-        res.json(tracks.slice(page_start, page_end)).status(200);
-        return
+        listens.sort(sortByCount);
+        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+        page_end = Math.min(request.page_num*request.page_size, listens.length);
+        res.json(listens.slice(page_start, page_end)).status(200);
+        return;
     case TRACK_TIME:
-        res.status(405).json({
-            error: "list_by TRACK_TIME not currently allowed"
-        });
+        listens.sort(sortByTime);
+        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+        page_end = Math.min(request.page_num*request.page_size, listens.length);
+        res.json(listens.slice(page_start, page_end)).status(200);
         return;
     case TRACK_ALPHABETICAL:
-        res.status(405).json({
-            error: "list_by TRACK_ALPHABETICAL not currently allowed"
-        });
+        listens.sort(sortByTrack);
+        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+        page_end = Math.min(request.page_num*request.page_size, listens.length);
+        res.json(listens.slice(page_start, page_end)).status(200);
         return;
     case ARTIST_ALPHABETICAL:
-        res.status(405).json({
-            error: "list_by ARTIST_ALPHABETICAL not currently allowed"
-        });
+        listens.sort(sortByArtist);
+        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+        page_end = Math.min(request.page_num*request.page_size, listens.length);
+        res.json(listens.slice(page_start, page_end)).status(200);
         return;
     case ALBUM_ALPHABETICAL:
-        res.status(405).json({
-            error: "list_by ALBUM_ALPHABETICAL not currently allowed"
-        });
+        listens.sort(sortByAlbum);
+        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+        page_end = Math.min(request.page_num*request.page_size, listens.length);
+        res.json(listens.slice(page_start, page_end)).status(200);
         return;
     default:
         res.status(400).json({
@@ -154,19 +237,75 @@ const mapUriToTrackData = async (user, listen_map) => {
         let track = tracks[i]; 
         data_map[track.uri] = track;
     }
-    for (const uri in listen_map) {
-        try {   
-            data_map[uri].listens = listen_map[uri];
-        } catch (e) {
-            console.error("failed to set listens for", uri, ":", e);
-        }
-    }
 
     return data_map;
 }
 
-const sortByCount = (track_a, track_b) => {
-    return track_b.listens - track_a.listens;
+const sortByCount = (listen_a, listen_b) => {
+    return listen_b.count - listen_a.count;
 }
+
+const sortByTime = (listen_a, listen_b) => {
+    let b_seconds = listen_b.track.duration_ms * listen_b.count;
+    let a_seconds = listen_a.track.duration_ms * listen_a.count;
+    return b_seconds - a_seconds;
+}
+
+const sortByTrack = (listen_a, listen_b) => {
+    let b_title = listen_b.track.name;
+    let a_title = listen_a.track.name;
+    if (b_title < a_title) {
+        return 1;
+    } else if (b_title > a_title) {
+        return -1;
+    } else {
+        return sortByCount(listen_a, listen_b);
+    }
+}
+
+const sortByArtist = (listen_a, listen_b) => {
+    let b_artist;
+    try {
+        b_artist = listen_b.track.artists[0].name;
+    } catch {
+        b_artist = "";
+    }
+    let a_artist 
+    try {
+        a_artist = listen_a.track.artists[0].name;
+    } catch {
+        a_artist = "";
+    }
+    if (b_artist < a_artist) {
+        return 1;
+    } else if (b_artist > a_artist) {
+        return -1;
+    } else {
+        return sortByCount(listen_a, listen_b);
+    }
+}
+
+const sortByAlbum = (listen_a, listen_b) => {
+    let b_album;
+    try {
+        b_album = listen_b.track.album.name;
+    } catch {
+        b_album = "";
+    }
+    let a_album 
+    try {
+        a_album = listen_a.track.album.name;
+    } catch {
+        a_album = "";
+    }
+    if (b_album < a_album) {
+        return 1;
+    } else if (b_album > a_album) {
+        return -1;
+    } else {
+        return sortByCount(listen_a, listen_b);
+    }
+}
+
 
 module.exports = listTracks;
