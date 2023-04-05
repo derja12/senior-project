@@ -5,17 +5,26 @@ const ROOT_URL = 'https://cer8phtgvw.us-east-2.awsapprunner.com';
 enum list_option {
     TRACK_COUNT = 1,
     TRACK_TIME,
-    TRACK_ALPHABETICAL,
-    ARTIST_ALPHABETICAL,
-    ALBUM_ALPHABETICAL,
+    TRACK_NAME,
+    ARTIST_NAME,
+    ALBUM_NAME,
 };
 
-interface ListTracksRequest {
-    list_by: list_option;
-    page_size: number;
-    page_num: number;
-    time_filter: TimeFilter;
-};
+interface strToEnumType {
+    "Track count": boolean;
+    "Track time": boolean;
+    "Track name": boolean;
+    "Artist name": boolean;
+    "Album name": boolean;
+}
+
+const strToEnum = {
+    "Track count": list_option.TRACK_COUNT,
+    "Track time": list_option.TRACK_TIME,
+    "Track name": list_option.TRACK_NAME,
+    "Artist name": list_option.ARTIST_NAME,
+    "Album name": list_option.ALBUM_NAME,
+}
 
 interface TimeFilter {
     start_time: number;
@@ -28,12 +37,33 @@ interface user {
     spotifyConnected: boolean;
 };
 
+const contextTooltip = {
+    "Playlist": "played from a playlist",
+    "Album": "played from an album",
+    "No context": "played without context (ie. auto-play)",
+}
+
+interface ctxToValType {
+    "Playlist": string;
+    "Album": string;
+    "No context": string;
+}
+
+const contextFilterToValue:ctxToValType = {
+    "Playlist": "playlist",
+    "Album": "album",
+    "No context": "context_free",
+}
+
 interface dataRet {
     isLoggedIn: boolean;
     user: user;
     history: listen[];
-    tracks: track[];
+    tracks: listen[];
     nav: string;
+    sort: string;
+    contextFilters: any;
+    contextTooltip: any;
 };
 
 interface image {
@@ -62,13 +92,13 @@ interface track {
     popularity: number;
     track_number: number;
     uri: string;
-    listens?: number;
 };
 
 interface listen {
     track: track;
     played_at: number;
     context_uri: string;
+    count: number;
 };
 
 export default {
@@ -83,6 +113,13 @@ export default {
             history: [],
             tracks: [],
             nav: "tracks",
+            contextFilters: {
+                "Album": true,
+                "Playlist": true,
+                "No context": true,
+            },
+            sort: "Track count",
+            contextTooltip: contextTooltip,
         }
         return d
     },
@@ -141,8 +178,19 @@ export default {
         },
         async getTracks() {
             let params:string = "";
-            params += "?list_by=" + encodeURIComponent(list_option.TRACK_COUNT);
-            params += "&page_size=" + encodeURIComponent(10);
+            
+            params += "?list_by=" + encodeURIComponent(strToEnum[this.sort as keyof strToEnumType]);
+            
+            params += "&page_size=" + encodeURIComponent(50);
+
+            let contexts:string = "";
+            for (let filter in this.contextFilters) {
+                if (this.contextFilters[filter]) {
+                    contexts += "," + contextFilterToValue[filter as keyof ctxToValType]
+                }
+            }
+            params += "&contexts=" + encodeURIComponent(contexts.slice(1));
+
             try {
                 let response = await fetch(ROOT_URL + '/tracks' + params);
                 if (response.ok) {
@@ -151,6 +199,19 @@ export default {
             } catch (error) {
                 console.log('unable to get tracks:', error);
             }
+        },
+        clearFilter() {
+            this.contextFilters = {
+                "Album": true,
+                "Playlist": true,
+                "No context": true,
+            };
+            this.sort = "Track count";
+        }
+    },
+    computed: {
+        sortEnums() {
+            return Object.keys(strToEnum);
         }
     },
     mounted() {
@@ -184,23 +245,62 @@ export default {
         </v-navigation-drawer>
         <v-main>
             <v-container class='elevation-2 my-0 py-0 h-100 d-flex flex-column'>
+                
+                
                 <v-container v-if='!user.spotifyConnected' class="d-flex flex-column align-center">
                     <div class="mb-2">Connect Your Spotify Account to get started!</div>
                     <v-btn variant='outlined' @click='authorizeSpotify'>
                         Connect
                     </v-btn>
                 </v-container>
+
+
                 <v-container v-else-if="nav == 'tracks'" class="d-flex my-0 py-0 flex-column align-center">
-                    <v-sheet :border="true" class="rounded-b w-50 pa-4 d-flex justify-center">
-                        <v-btn 
-                            variant='outlined'
-                            @click='getTracks'>
-                            Get Tracks
+                    <v-sheet :border="true" class="rounded-b w-75 pa-4 d-flex justify-center">
+                        <v-btn class="mr-2" icon="mdi-filter-remove" variant="flat" @click="clearFilter">
+                        </v-btn>
+                        <v-spacer/>
+                        <div class="d-flex align-start w-100">
+                            <v-autocomplete
+                                label="sort"
+                                v-model="sort"
+                                :items="sortEnums"
+                                class="d-inline-block w-50"
+                            ></v-autocomplete>
+                            <div class="d-inline-block w-50 pa-2 pt-0">
+                                <div class="text-caption mb-2">Contexts to include:</div>
+                                <v-item-group multiple selected-class="bg-grey-darken-1" class="d-flex justify-space-between">
+                                    <v-item
+                                        v-for="filter in Object.keys(contextFilters)"
+                                        v-slot="{ selectedClass }"
+                                        :key="filter"
+                                        >
+                                        <v-tooltip :text="contextTooltip[filter]" location="bottom">
+                                            <template v-slot:activator="{ props }">
+                                                <v-btn
+                                                    variant="tonal"
+                                                    @click="contextFilters[filter] = !contextFilters[filter]"
+                                                    v-bind="props"
+                                                    :class="contextFilters[filter]? ['bg-grey-darken-1'] : []"
+                                                    size="small"
+                                                    >
+                                                    {{ filter }}
+                                                </v-btn>
+                                            </template>
+                                        </v-tooltip>
+                                        
+                                    </v-item>
+                                </v-item-group>
+                            </div>
+                        </div>
+                        <v-spacer/>
+                        <v-btn class="ml-2" icon="mdi-magnify" variant="flat"
+                        @click='getTracks'>
                         </v-btn>
                     </v-sheet>
                     <v-container class="">
                         <v-card
-                            v-for="track in tracks" 
+                            v-for="listen in tracks" 
                             variant="plain"
                             class="w-50 mx-auto my-1 d-flex align-start"
                             :border="true"
@@ -208,20 +308,22 @@ export default {
                             >
                             <div class="ma-0 pa-0">
                                 <img
-                                    :src="track.album.images[0].url"
+                                    :src="listen.track.album.images[0].url"
                                     width="75"
                                     height="75"
                                     class="ma-0 pa-0 d-block"
                                 >
                             </div>
                             <v-sheet class="d-inline-flex flex-column ma-1 my-auto">
-                                <h3>{{ track.name }}</h3>
-                                <p>{{ track.artists[0].name }} - {{ track.album.name }}</p>
-                                <p>{{ track.listens }} listens</p>
+                                <h3>{{ listen.track.name }}</h3>
+                                <p>{{ listen.track.artists[0].name }} - {{ listen.track.album.name }}</p>
+                                <p>{{ listen.count }} listens</p>
                             </v-sheet>
                         </v-card>
                     </v-container>
                 </v-container>
+                
+                
                 <v-container v-else-if="nav == 'history'" class="d-flex my-0 py-0 flex-column align-center">
                     <v-sheet :border="true" class="rounded-b w-50 pa-4 d-flex justify-center">
                         <v-btn 
