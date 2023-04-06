@@ -3,6 +3,7 @@ const User = model.User;
 
 const refreshAccessToken = require('../spotify/refreshAccessToken');
 const getBulkTrackData = require('../spotify/getBulkTrackData');
+const { updateListensForUser } = require('../spotify/updateListens');
 
 /*
 enum list_option {
@@ -51,6 +52,13 @@ const listTracks = async (req, res) => {
     
     // populate listens
     let user = await User.findById(req.user._id).populate({
+        path: 'listens'
+    }).exec();
+
+    await updateListensForUser(req.user);
+
+    // refresh listens
+    user = await User.findById(req.user._id).populate({
         path: 'listens'
     }).exec();
 

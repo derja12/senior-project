@@ -13,7 +13,7 @@ const authorizeSpotify = require('./spotify/authorizeSpotify');
 const getAccessToken = require('./spotify/getAccessToken');
 const refreshAccessToken = require('./spotify/refreshAccessToken');
 const getRecentlyPlayed = require('./spotify/getRecentlyPlayed');
-const updateListens = require('./spotify/updateListens');
+const { updateListens } = require('./spotify/updateListens');
 
 const listTracks = require('./tracks/listTracks');
 
