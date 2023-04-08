@@ -24,6 +24,7 @@ const ping = require('./misc/ping');
 const pong = require('./misc/pong');
 
 const model = require('./mongo/model');
+const listAlbums = require('./albums/listAlbums');
 const User = model.User;
 const Listen = model.Listen;
 
@@ -146,6 +147,7 @@ app.get('/history', async (req, res) => {
 
 
 app.get('/tracks', listTracks);
+app.get('/albums', listAlbums);
 
 if (process.env.UPDATE_LISTENS === "true") {
     updateListens()
