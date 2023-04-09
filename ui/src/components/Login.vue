@@ -1,6 +1,6 @@
 <script lang="ts">
-// const ROOT_URL = 'http://localhost:5173';
-const ROOT_URL = 'https://cer8phtgvw.us-east-2.awsapprunner.com';
+const ROOT_URL = 'http://localhost:5173';
+// const ROOT_URL = 'https://cer8phtgvw.us-east-2.awsapprunner.com';
 
 export default {
     data(){
@@ -8,6 +8,7 @@ export default {
             email: "",
             password: "",
             showLogin: false,
+            errorText: "",
         }
     },
     methods: {
@@ -23,8 +24,10 @@ export default {
                 });
                 if (response.status == 201) {
                     this.$router.push('/');
+                } else if (response.status == 401) {
+                    this.errorText = "Email and/or password not recognized. Please try again"
                 } else {
-                    console.error("failed to log in:", response.statusText);
+                    this.errorText = "An unknown error occured while attempting to login"
                 }
             } catch (error) {
                 console.error("failed to log in:", error);
@@ -49,14 +52,16 @@ export default {
     <v-app v-show="showLogin">
         <v-main>
             <v-container class="h-100 d-flex justify-center align-center">
-                <v-card class="px-16 pt-4">
+                <v-card class="w-50 px-16 pt-4">
                     <!-- title -->
-                    <v-card-title class="text-h5">Log in to your DaF account</v-card-title>
+                    <v-card-title class="text-h5" style="text-align: center;">Log in to your DaF account</v-card-title>
+
+                    <p v-if="errorText" style="text-align: center;" class="pa-2 text-red-lighten-1 bg-red-lighten-5 mt-4">{{ errorText }}</p>
 
                     <!-- text fields -->
                     <v-text-field 
                         v-model="email" @keydown.enter="loginDaF" 
-                        label="email" type="email" class="mt-10">
+                        label="email" type="email" class="mt-4">
                     </v-text-field>
                     <v-text-field 
                         v-model="password" @keydown.enter="loginDaF" 
@@ -71,7 +76,7 @@ export default {
                     </v-card-actions>
 
                     <!-- sign up buttons -->
-                    <v-container>
+                    <v-container style="text-align: center;">
                         Don't have an account? 
                         <v-btn variant="plain" class="mx-n2 text-teal-lighten-2" @click="sendToRegister">
                             Sign Up

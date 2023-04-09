@@ -8,7 +8,6 @@ const postUser = (req, res) => {
     });
     user.setEncryptedPassword(req.body.passwordText).then(() => {
         user.save().then(() => {
-            console.log('User created:', user);
             res.status(201).send('created');
         }).catch((error) => {
             if (error.code == 11000) {
