@@ -146,6 +146,9 @@ app.get('/history', async (req, res) => {
 
 
 app.get('/tracks', listTracks);
+    app.get('/login', (req, res) => {
+    res.redirect('/');
+})
 
 if (process.env.UPDATE_LISTENS === "true") {
     updateListens()
