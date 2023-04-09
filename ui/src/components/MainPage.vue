@@ -60,6 +60,7 @@ interface dataRet {
     user: user;
     history: listen[];
     tracks: listen[];
+    cur_page: number;
     nav: string;
     sort: string;
     contextFilters: any;
@@ -120,6 +121,7 @@ export default {
             },
             sort: "Track count",
             contextTooltip: contextTooltip,
+            cur_page: 1,
         }
         return d
     },
@@ -181,8 +183,6 @@ export default {
             
             params += "?list_by=" + encodeURIComponent(strToEnum[this.sort as keyof strToEnumType]);
             
-            params += "&page_size=" + encodeURIComponent(50);
-
             let contexts:string = "";
             for (let filter in this.contextFilters) {
                 if (this.contextFilters[filter]) {
@@ -207,6 +207,34 @@ export default {
                 "No context": true,
             };
             this.sort = "Track count";
+        },
+        msToString(millis:number):string {
+            // ms -> 12m:46s
+            let totalSeconds = (millis - (millis % 1000)) / 1000;
+            if (totalSeconds < 60) {
+                return sTwoDigit(totalSeconds) + "s";
+            }
+            let seconds = totalSeconds % 60;
+            let totalMinutes = (totalSeconds - seconds) / 60;
+            if (totalMinutes < 60) {
+                return sTwoDigit(totalMinutes) + ":" + sTwoDigit(seconds) + "s";
+            }
+            let minutes = totalMinutes % 60;
+            let totalHours = (totalMinutes - minutes) / 60;
+            if (totalHours < 24) {
+                return String(totalHours) + ":" + sTwoDigit(minutes) + ":" + sTwoDigit(seconds) + "s";
+            }
+            let hours = totalHours % 24;
+            let days = (totalHours - hours) / 24;
+            return String(days) + ":" + sTwoDigit(hours) + ":" + sTwoDigit(minutes) + ":" + sTwoDigit(seconds) + "s";
+        },
+        pages(total:number, page_size:number) {
+            let remainder = total % page_size
+            if (remainder == 0) {
+                return total / page_size;
+            } else {
+                return ((total - remainder) / page_size) + 1;
+            }
         }
     },
     computed: {
@@ -217,6 +245,10 @@ export default {
     mounted() {
         this.login();
     }
+}
+
+const sTwoDigit = (mins:number):string => {
+    return ("0" + String(mins)).slice(-2);
 }
 </script>
 
@@ -299,8 +331,13 @@ export default {
                         </v-btn>
                     </v-sheet>
                     <v-container class="">
+                        <v-pagination 
+                            v-model="cur_page" 
+                            v-if="pages(tracks.length, 25) > 1" 
+                            :length="pages(tracks.length, 25)"
+                            class="w-50 mx-auto"/>
                         <v-card
-                            v-for="listen in tracks" 
+                            v-for="listen in tracks.slice((cur_page-1)*25, cur_page*25)" 
                             variant="plain"
                             class="w-50 mx-auto my-1 d-flex align-start"
                             :border="true"
@@ -317,9 +354,17 @@ export default {
                             <v-sheet class="d-inline-flex flex-column ma-1 my-auto">
                                 <h3>{{ listen.track.name }}</h3>
                                 <p>{{ listen.track.artists[0].name }} - {{ listen.track.album.name }}</p>
-                                <p>{{ listen.count }} listens</p>
+                                <p>
+                                    {{ listen.count }} listens 
+                                    &#x2022; {{ msToString(listen.track.duration_ms * listen.count) }}
+                                </p>
                             </v-sheet>
                         </v-card>
+                        <v-pagination 
+                            v-model="cur_page" 
+                            v-if="pages(tracks.length, 25) > 1"
+                            :length="pages(tracks.length, 25)"
+                            class="w-50 mx-auto"/>
                     </v-container>
                 </v-container>
                 
@@ -355,7 +400,7 @@ export default {
                         </v-card>
                     </v-container>
                 </v-container>
-                <v-container v-else></v-container>
+                <v-container v-else class="d-flex justify-center"><p class="text-h4 mt-15 text-grey-lighten-1">Coming soon!</p></v-container>
             </v-container>
         </v-main>
     </v-app>

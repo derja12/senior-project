@@ -157,33 +157,53 @@ const listTracks = async (req, res) => {
     switch (request.list_by) {
     case TRACK_COUNT:
         listens.sort(sortByCount);
-        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
-        page_end = Math.min(request.page_num*request.page_size, listens.length);
-        res.json(listens.slice(page_start, page_end)).status(200);
+        if (request.hasOwnProperty('page_size')) {
+            page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+            page_end = Math.min(request.page_num*request.page_size, listens.length);
+            res.json(listens.slice(page_start, page_end)).status(200);
+        } else {
+            res.json(listens).status(200);
+        }
         return;
     case TRACK_TIME:
         listens.sort(sortByTime);
-        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
-        page_end = Math.min(request.page_num*request.page_size, listens.length);
-        res.json(listens.slice(page_start, page_end)).status(200);
+        if (request.hasOwnProperty('page_size')) {
+            page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+            page_end = Math.min(request.page_num*request.page_size, listens.length);
+            res.json(listens.slice(page_start, page_end)).status(200);
+        } else {
+            res.json(listens).status(200);
+        }
         return;
     case TRACK_ALPHABETICAL:
         listens.sort(sortByTrack);
-        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
-        page_end = Math.min(request.page_num*request.page_size, listens.length);
-        res.json(listens.slice(page_start, page_end)).status(200);
+        if (request.hasOwnProperty('page_size')) {
+            page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+            page_end = Math.min(request.page_num*request.page_size, listens.length);
+            res.json(listens.slice(page_start, page_end)).status(200);
+        } else {
+            res.json(listens).status(200);
+        }
         return;
     case ARTIST_ALPHABETICAL:
         listens.sort(sortByArtist);
-        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
-        page_end = Math.min(request.page_num*request.page_size, listens.length);
-        res.json(listens.slice(page_start, page_end)).status(200);
+        if (request.hasOwnProperty('page_size')) {
+            page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+            page_end = Math.min(request.page_num*request.page_size, listens.length);
+            res.json(listens.slice(page_start, page_end)).status(200);
+        } else {
+            res.json(listens).status(200);
+        }
         return;
     case ALBUM_ALPHABETICAL:
         listens.sort(sortByAlbum);
-        page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
-        page_end = Math.min(request.page_num*request.page_size, listens.length);
-        res.json(listens.slice(page_start, page_end)).status(200);
+        if (request.hasOwnProperty('page_size')) {
+            page_start = Math.min((request.page_num-1)*request.page_size, listens.length);
+            page_end = Math.min(request.page_num*request.page_size, listens.length);
+            res.json(listens.slice(page_start, page_end)).status(200);
+        } else {
+            res.json(listens).status(200);
+        }
         return;
     default:
         res.status(400).json({
@@ -206,16 +226,18 @@ const validateRequest = (request) => {
         return {error: "list_by must be within 1 and 5"};
     }
 
-    if (!request.hasOwnProperty("page_size")) {
-        request.page_size = 50; // default page size
-    }
-    try {
-        request.page_size = Number(request.page_size);
-    } catch (e) {
-        return {error: e};
-    }
-    if (request.page_size <= 0 || request.page_size > 100) {
-        return {error: "page_size must be within 1 and 100"};
+    if (request.hasOwnProperty("page_size")) {
+        try {
+            request.page_size = Number(request.page_size);
+        } catch (e) {
+            return {error: e};
+        }
+        if (request.page_size <= 0) {
+            return {error: "page_size must be greater than 0"};
+        }
+    } else {
+        // no page_size == entire list.
+        // should insert limit once FE can adapt.
     }
     
     if (!request.hasOwnProperty("page_num")) {

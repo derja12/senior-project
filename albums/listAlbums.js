@@ -107,9 +107,13 @@ const listAlbums = async (req, res) => {
     switch (request.list_by) {
     case COUNT:
         albums.sort(sortByCount);
-        page_start = Math.min((request.page_num-1)*request.page_size, albums.length);
-        page_end = Math.min(request.page_num*request.page_size, albums.length);
-        res.json(albums.slice(page_start, page_end)).status(200);
+        if (request.hasOwnProperty('page_num')) {
+            page_start = Math.min((request.page_num-1)*request.page_size, albums.length);
+            page_end = Math.min(request.page_num*request.page_size, albums.length);
+            res.json(albums.slice(page_start, page_end)).status(200);
+        } else {
+            res.json(albums).status(200);
+        }
         return;
     case TIME:
         res.status(405).json({
