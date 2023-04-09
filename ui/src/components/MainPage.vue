@@ -58,13 +58,18 @@ const contextFilterToValue:ctxToValType = {
 interface dataRet {
     isLoggedIn: boolean;
     user: user;
-    history: listen[];
-    tracks: listen[];
-    cur_page: number;
     nav: string;
+
+    history: listen[];
+    history_loading: boolean;
+    
     sort: string;
     contextFilters: any;
     contextTooltip: any;
+
+    tracks: listen[];
+    tracks_cur_page: number;
+    tracks_loading: boolean;
 };
 
 interface image {
@@ -112,6 +117,7 @@ export default {
                 spotifyConnected: false,
             },
             history: [],
+            history_loading: false,
             tracks: [],
             nav: "tracks",
             contextFilters: {
@@ -121,7 +127,8 @@ export default {
             },
             sort: "Track count",
             contextTooltip: contextTooltip,
-            cur_page: 1,
+            tracks_cur_page: 1,
+            tracks_loading: false,
         }
         return d
     },
@@ -169,14 +176,15 @@ export default {
         },
         async getHistory() {
             try {
+                this.history_loading = true;
                 let response = await fetch(ROOT_URL + '/history');
                 let data = await response.json();
 
                 this.history = data;
-                console.log(this.history);
             } catch (error) {
                 console.log('unable to get history:', error);
             }
+            this.history_loading = false;
         },
         async getTracks() {
             let params:string = "";
@@ -192,6 +200,7 @@ export default {
             params += "&contexts=" + encodeURIComponent(contexts.slice(1));
 
             try {
+                this.tracks_loading = true;
                 let response = await fetch(ROOT_URL + '/tracks' + params);
                 if (response.ok) {
                     this.tracks = await response.json()
@@ -199,6 +208,7 @@ export default {
             } catch (error) {
                 console.log('unable to get tracks:', error);
             }
+            this.tracks_loading = false;
         },
         clearFilter() {
             this.contextFilters = {
@@ -272,7 +282,7 @@ const sTwoDigit = (mins:number):string => {
 
                 <v-list-item title="Artists" value="artists" prepend-icon="mdi-account" @click="nav = 'artists'"></v-list-item>
 
-                <v-list-item title="History" value="settings" prepend-icon="mdi-folder-music" @click="nav = 'history'"></v-list-item>
+                <v-list-item title="Recent History" value="settings" prepend-icon="mdi-folder-music" @click="nav = 'history'"></v-list-item>
             </v-list>
         </v-navigation-drawer>
         <v-main>
@@ -288,8 +298,13 @@ const sTwoDigit = (mins:number):string => {
 
 
                 <v-container v-else-if="nav == 'tracks'" class="d-flex my-0 py-0 flex-column align-center">
-                    <v-sheet :border="true" class="rounded-b w-75 pa-4 d-flex justify-center">
-                        <v-btn class="mr-2" icon="mdi-filter-remove" variant="flat" @click="clearFilter">
+                    <v-card :border="true" :loading="tracks_loading" variant="flat" elevation="1" class="rounded-b w-75 pa-4 d-flex justify-center">
+                        <v-btn 
+                            class="mr-2" 
+                            icon="mdi-filter-remove" 
+                            variant="flat" 
+                            :disabled="tracks_loading"
+                            @click="clearFilter">
                         </v-btn>
                         <v-spacer/>
                         <div class="d-flex align-start w-100">
@@ -298,6 +313,7 @@ const sTwoDigit = (mins:number):string => {
                                 v-model="sort"
                                 :items="sortEnums"
                                 class="d-inline-block w-50"
+                                :disabled="tracks_loading"
                             ></v-autocomplete>
                             <div class="d-inline-block w-50 pa-2 pt-0">
                                 <div class="text-caption mb-2">Contexts to include:</div>
@@ -315,6 +331,7 @@ const sTwoDigit = (mins:number):string => {
                                                     v-bind="props"
                                                     :class="contextFilters[filter]? ['bg-grey-darken-1'] : []"
                                                     size="small"
+                                                    :disabled="tracks_loading"
                                                     >
                                                     {{ filter }}
                                                 </v-btn>
@@ -326,22 +343,29 @@ const sTwoDigit = (mins:number):string => {
                             </div>
                         </div>
                         <v-spacer/>
-                        <v-btn class="ml-2" icon="mdi-magnify" variant="flat"
-                        @click='getTracks'>
+                        <v-btn
+                            class="ml-2"
+                            icon="mdi-magnify" 
+                            variant="flat"
+                            :disabled="tracks_loading"
+                            @click='getTracks'>
                         </v-btn>
-                    </v-sheet>
+                    </v-card>
                     <v-container class="">
                         <v-pagination 
-                            v-model="cur_page" 
+                            v-model="tracks_cur_page" 
                             v-if="pages(tracks.length, 25) > 1" 
                             :length="pages(tracks.length, 25)"
+                            :disabled="tracks_loading"
                             class="w-50 mx-auto"/>
                         <v-card
-                            v-for="listen in tracks.slice((cur_page-1)*25, cur_page*25)" 
+                            v-for="listen in tracks.slice((tracks_cur_page-1)*25, tracks_cur_page*25)" 
                             variant="plain"
-                            class="w-50 mx-auto my-1 d-flex align-start"
+                            class="mx-auto my-1 d-flex align-start"
+                            width="60%"
                             :border="true"
                             elevation="1"
+                            :disabled="tracks_loading"
                             >
                             <div class="ma-0 pa-0">
                                 <img
@@ -351,7 +375,7 @@ const sTwoDigit = (mins:number):string => {
                                     class="ma-0 pa-0 d-block"
                                 >
                             </div>
-                            <v-sheet class="d-inline-flex flex-column ma-1 my-auto">
+                            <v-sheet style="white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis;" class="d-inline-flex flex-column ma-1 my-auto">
                                 <h3>{{ listen.track.name }}</h3>
                                 <p>{{ listen.track.artists[0].name }} - {{ listen.track.album.name }}</p>
                                 <p>
@@ -361,9 +385,10 @@ const sTwoDigit = (mins:number):string => {
                             </v-sheet>
                         </v-card>
                         <v-pagination 
-                            v-model="cur_page" 
+                            v-model="tracks_cur_page" 
                             v-if="pages(tracks.length, 25) > 1"
                             :length="pages(tracks.length, 25)"
+                            :disabled="tracks_loading"
                             class="w-50 mx-auto"/>
                     </v-container>
                 </v-container>
@@ -373,6 +398,7 @@ const sTwoDigit = (mins:number):string => {
                     <v-sheet :border="true" class="rounded-b w-50 pa-4 d-flex justify-center">
                         <v-btn 
                             variant='outlined'
+                            :loading="history_loading"
                             @click='getHistory'>
                             Get History
                         </v-btn>
@@ -383,6 +409,7 @@ const sTwoDigit = (mins:number):string => {
                             variant="plain"
                             class="w-50 mx-auto my-1 d-flex align-start"
                             :border="true"
+                            :disabled="history_loading"
                             elevation="1"
                             >
                             <div class="ma-0 pa-0">
@@ -395,7 +422,7 @@ const sTwoDigit = (mins:number):string => {
                             </div>
                             <v-sheet class="d-inline-flex flex-column ma-1 my-auto">
                                 <h3>{{ listen.track.name }}</h3>
-                                <p>{{ listen.track.artists[0].name }} - {{ listen.track.album.name }}</p>
+                                <p style="flex-wrap: nowrap; text-overflow: ellipsis;">{{ listen.track.artists[0].name }} - {{ listen.track.album.name }}</p>
                             </v-sheet>
                         </v-card>
                     </v-container>
