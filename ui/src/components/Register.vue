@@ -101,7 +101,7 @@ function validatePassword(password:string, confirm_password:string):string {
             <v-container class="h-100 d-flex justify-center align-center">
                 <v-card class="w-50 px-16 pt-4">
                     <!-- title -->
-                    <v-card-title class="text-h5">Create new DaF account</v-card-title>
+                    <v-card-title class="text-h5" style="text-align: center;">Create new DaF account</v-card-title>
 
                     <p v-if="gErrorText" style="text-align: center;" class="pa-2 text-red-lighten-1 bg-red-lighten-5 mt-4">{{ gErrorText }}</p>
 
