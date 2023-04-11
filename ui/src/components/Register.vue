@@ -139,7 +139,7 @@ function validatePassword(password:string, confirm_password:string):string {
 
                     <!-- login buttons -->
                     <v-card-actions>    
-                        <v-btn size="large" class="w-100 bg-grey-darken-4 text-teal-lighten-2" @click="signupDaF">
+                        <v-btn size="large" class="rounded-0 w-100 bg-grey-darken-4 text-teal-lighten-2" @click="signupDaF">
                             Register
                         </v-btn>
                     </v-card-actions>

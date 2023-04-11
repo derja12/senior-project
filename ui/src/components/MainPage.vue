@@ -320,7 +320,6 @@ const sTwoDigit = (mins:number):string => {
                                 <v-item-group multiple selected-class="bg-grey-darken-1" class="d-flex justify-space-between">
                                     <v-item
                                         v-for="filter in Object.keys(contextFilters)"
-                                        v-slot="{ selectedClass }"
                                         :key="filter"
                                         >
                                         <v-tooltip :text="contextTooltip[filter]" location="bottom">
@@ -378,7 +377,7 @@ const sTwoDigit = (mins:number):string => {
                             <v-sheet style="white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis;" class="d-inline-flex flex-column ma-1 my-auto">
                                 <h3>{{ listen.track.name }}</h3>
                                 <p>{{ listen.track.artists[0].name }} - {{ listen.track.album.name }}</p>
-                                <p>
+                                <p class="text-grey-darken-2 text-body-2">
                                     {{ listen.count }} listens 
                                     &#x2022; {{ msToString(listen.track.duration_ms * listen.count) }}
                                 </p>
@@ -407,7 +406,8 @@ const sTwoDigit = (mins:number):string => {
                         <v-card
                             v-for="listen in history" 
                             variant="plain"
-                            class="w-50 mx-auto my-1 d-flex align-start"
+                            class="mx-auto my-1 d-flex align-start"
+                            width="60%"
                             :border="true"
                             :disabled="history_loading"
                             elevation="1"
@@ -420,9 +420,9 @@ const sTwoDigit = (mins:number):string => {
                                     class="ma-0 pa-0 d-block"
                                 >
                             </div>
-                            <v-sheet class="d-inline-flex flex-column ma-1 my-auto">
+                            <v-sheet style="white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis;" class="d-inline-flex flex-column ma-1 my-auto">
                                 <h3>{{ listen.track.name }}</h3>
-                                <p style="flex-wrap: nowrap; text-overflow: ellipsis;">{{ listen.track.artists[0].name }} - {{ listen.track.album.name }}</p>
+                                <p>{{ listen.track.artists[0].name }} - {{ listen.track.album.name }}</p>
                             </v-sheet>
                         </v-card>
                     </v-container>

@@ -61,16 +61,16 @@ export default {
                     <!-- text fields -->
                     <v-text-field 
                         v-model="email" @keydown.enter="loginDaF" 
-                        label="email" type="email" class="mt-4">
+                        label="email" type="email" class="mt-4 mx-8">
                     </v-text-field>
                     <v-text-field 
                         v-model="password" @keydown.enter="loginDaF" 
-                        label="password" type="password" class="">
+                        label="password" type="password" class="mx-8">
                     </v-text-field>
 
                     <!-- login buttons -->
                     <v-card-actions>    
-                        <v-btn size="large" class="w-100 bg-grey-darken-4 text-teal-lighten-2" @click="loginDaF">
+                        <v-btn size="large" width="88%" class="rounded-0 mx-auto bg-grey-darken-4 text-teal-lighten-2" @click="loginDaF">
                             Login
                         </v-btn>
                     </v-card-actions>
