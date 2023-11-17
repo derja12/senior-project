@@ -1,77 +1,78 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { Schema } = mongoose;
-mongoose.connect('mongodb+srv://daf:' + process.env.MONGO_PASSWORD + '@bettercluster.qntzaw0.mongodb.net/?retryWrites=true&w=majority');
+mongoose.connect(
+  "mongodb+srv://daf:" +
+    process.env.MONGO_PASSWORD +
+    "@bettercluster.qntzaw0.mongodb.net/?retryWrites=true&w=majority"
+);
 
 const userSchema = new mongoose.Schema({
-    firstName: {
-        type: String,
-        required: [true, "Please specify a first name"]
-    },
-    lastName: {
-        type: String,
-        required: [true, "Please specify a last name"]
-    },
-    email: {
-        type: String,
-        required: [true, "Please specify an email"],
-        unique: true
-    },
-    encryptedPassword: {
-        type: String,
-        required: [true, "Please specify a password"]
-    },
-    refreshToken: {
-        type: String
-    },
-    listens: [{ type: Schema.Types.ObjectId, ref: 'listen' }]
+  firstName: {
+    type: String,
+    required: [true, "Please specify a first name"],
+  },
+  lastName: {
+    type: String,
+    required: [true, "Please specify a last name"],
+  },
+  email: {
+    type: String,
+    required: [true, "Please specify an email"],
+    unique: true,
+  },
+  encryptedPassword: {
+    type: String,
+    required: [true, "Please specify a password"],
+  },
+  refreshToken: {
+    type: String,
+  },
+  listens: [{ type: Schema.Types.ObjectId, ref: "listen" }],
 });
 
 userSchema.methods.setEncryptedPassword = function (passwordText) {
-    // CREATE A PROMISE
-    let promise = new Promise((resolve, reject) => {
-        
-        // bcrypt HASHING
-        if (passwordText == "") {
-            resolve();
-        }
-        bcrypt.hash(passwordText, 12).then((hash) => {
-            this.encryptedPassword = hash;
+  // CREATE A PROMISE
+  let promise = new Promise((resolve, reject) => {
+    // bcrypt HASHING
+    if (passwordText == "") {
+      resolve();
+    }
+    bcrypt.hash(passwordText, 12).then((hash) => {
+      this.encryptedPassword = hash;
 
-            // RESOLVE PROMISE
-            resolve();
-        });
+      // RESOLVE PROMISE
+      resolve();
     });
-    return promise;
+  });
+  return promise;
 };
 
 userSchema.methods.verifyPassword = function (passwordText) {
-    // CREATE A PROMISE
-    let promise = new Promise((resolve, reject) => {
-
-        // bcrypt HASHING
-        bcrypt.compare(passwordText, this.encryptedPassword).then((result) => {
-        
-            // RESOLVE PROMISE with parameter
-            resolve(result);
-        });
+  // CREATE A PROMISE
+  let promise = new Promise((resolve, reject) => {
+    // bcrypt HASHING
+    bcrypt.compare(passwordText, this.encryptedPassword).then((result) => {
+      // RESOLVE PROMISE with parameter
+      resolve(result);
     });
-    return promise;
+  });
+  return promise;
 };
 
 const User = mongoose.model("user", userSchema);
-const Listen = mongoose.model('listen', {
-    track_uri: String,
-    // track: { 
-    //     type: Schema.Types.ObjectId, 
-    //     ref: 'track'
-    // },
-    played_at: Number,
-    context_uri: String,
-    // context: {
-    //     type: Schema.Types.ObjectId,
-    //     ref: 'context'
-    // }
+const Listen = mongoose.model("listen", {
+  track_uri: String,
+  // track: {
+  //     type: Schema.Types.ObjectId,
+  //     ref: 'track'
+  // },
+  played_at: Number,
+  context_uri: String,
+  // context: {
+  //     type: Schema.Types.ObjectId,
+  //     ref: 'context'
+  // }
 });
 // const Track = mongoose.model('track', {
 //     album: {
@@ -88,15 +89,14 @@ const Listen = mongoose.model('listen', {
 //     external_ids: {type: Schema.Types.Mixed},
 //     href: {type: String},
 //     id: {
-//         type: String, 
+//         type: String,
 //         unique: true
 //     },
 //     is_local: {Type: bool},
 //     ...
 // })
 
-
 module.exports = {
-    User: User,
-    Listen: Listen
+  User: User,
+  Listen: Listen,
 };

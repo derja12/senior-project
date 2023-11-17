@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+const fetch = require("node-fetch");
 
 /* Data
 ---------------------------------
@@ -22,74 +22,73 @@ const fetch = require('node-fetch');
 */
 
 const copyTrackData = function (sTrack) {
-    let cTrack = {
-        artists: [],
-        duration_ms:  sTrack.duration_ms,
-        name:         sTrack.name,
-        popularity:   sTrack.popularity,
-        track_number: sTrack.track_number,
-        uri:          sTrack.uri,
+  let cTrack = {
+    artists: [],
+    duration_ms: sTrack.duration_ms,
+    name: sTrack.name,
+    popularity: sTrack.popularity,
+    track_number: sTrack.track_number,
+    uri: sTrack.uri,
+  };
+
+  // fill album if exists
+  if (sTrack.album) {
+    cTrack.album = {
+      uri: sTrack.album.uri,
+      total_tracks: sTrack.album.total_tracks,
+      images: [],
+      name: sTrack.album.name,
     };
-
-    // fill album if exists
-    if (sTrack.album) {
-        cTrack.album = {
-            uri:          sTrack.album.uri,
-            total_tracks: sTrack.album.total_tracks,
-            images:       [],
-            name:         sTrack.album.name,
+    // keep the smallest image
+    if (sTrack.album.images) {
+      let smallest_image = sTrack.album.images[0];
+      for (i in sTrack.album.images) {
+        if (sTrack.album.images[i] < smallest_image.width) {
+          smallest_image = sTrack.album.images[i];
         }
-        // keep the smallest image
-        if (sTrack.album.images) {
-            let smallest_image = sTrack.album.images[0];
-            for (i in sTrack.album.images) {
-                if (sTrack.album.images[i] < smallest_image.width) {
-                    smallest_image = sTrack.album.images[i];
-                }
-            }
-            cTrack.album.images.push(smallest_image);
-        }
+      }
+      cTrack.album.images.push(smallest_image);
     }
+  }
 
-
-    // fill artists
-    for (i in sTrack.artists) {
-        let cArtist = {
-            uri: sTrack.artists[i].uri,
-            name: sTrack.artists[i].name,
-        };
-        cTrack.artists.push(cArtist);
-    }
-    return cTrack;
-}
+  // fill artists
+  for (i in sTrack.artists) {
+    let cArtist = {
+      uri: sTrack.artists[i].uri,
+      name: sTrack.artists[i].name,
+    };
+    cTrack.artists.push(cArtist);
+  }
+  return cTrack;
+};
 
 const getTrackData = async (accessToken, trackUri) => {
-    // validate track uri
-    uri_comps = trackUri.split(':');
-    if (uri_comps[1] != 'track' || uri_comps.length != 3) {
-        console.error("invalid uri for getTrackData:", trackUri);
-    }
-    let id = uri_comps[2];
-    
-    // fetch sTrack from spotify api
-    url = 'https://api.spotify.com/v1/tracks/' + id;
-    let res = await fetch(url, {
-        method: 'GET',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-        },
-    });
-    let sTrack = await res.json();
+  // validate track uri
+  uri_comps = trackUri.split(":");
+  if (uri_comps[1] != "track" || uri_comps.length != 3) {
+    console.error("invalid uri for getTrackData:", trackUri);
+  }
+  let id = uri_comps[2];
 
-    // copy track into cTrack
-    let cTrack = copyTrackData(sTrack);
+  // fetch sTrack from spotify api
+  url = "https://api.spotify.com/v1/tracks/" + id;
+  let res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  let sTrack = await res.json();
 
-    return cTrack;
+  // copy track into cTrack
+  let cTrack = copyTrackData(sTrack);
+
+  return cTrack;
 };
 
 module.exports = {
-    getTrackData,
-    copyTrackData
+  getTrackData,
+  copyTrackData,
 };

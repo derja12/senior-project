@@ -1,41 +1,43 @@
-const fetch = require('node-fetch');
+const fetch = require("node-fetch");
 
-const getBulkTrackData = require('./getBulkTrackData');
+const getBulkTrackData = require("./getBulkTrackData");
 
 const getRecentlyPlayed = async (accessToken, after) => {
-    let url = 'https://api.spotify.com/v1/me/player/recently-played?';
+  let url = "https://api.spotify.com/v1/me/player/recently-played?";
 
-    if (after > 0) {
-        url += "after=" + encodeURIComponent(after.toString()) + "&";
+  if (after > 0) {
+    url += "after=" + encodeURIComponent(after.toString()) + "&";
+  }
+  url += "limit=50";
+
+  let res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  let data = await res.json();
+  if ("error" in data || !data) {
+    return data;
+  }
+
+  let uris = [];
+  for (i in data.items) {
+    uris.push(data.items[i].track.uri);
+  }
+  let cTracks = await getBulkTrackData(accessToken, uris);
+  for (i in cTracks) {
+    let track = cTracks[i];
+    for (j in data.items) {
+      if (data.items[j].track.uri == track.uri) {
+        data.items[j].track = track;
+      }
     }
-    url += "limit=50";
-
-    let res = await fetch(url, {
-        method: 'GET',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-        },
-    });
-
-    let data = await res.json();
-    if ('error' in data || !data) { return data; }
-
-    let uris = [];
-    for (i in data.items) {
-        uris.push(data.items[i].track.uri);
-    }
-    let cTracks = await getBulkTrackData(accessToken, uris);
-    for (i in cTracks) {
-        let track = cTracks[i];
-        for (j in data.items) {
-            if (data.items[j].track.uri == track.uri) {
-                data.items[j].track = track;
-            }
-        }
-    }
-    return data.items;
+  }
+  return data.items;
 };
 
 module.exports = getRecentlyPlayed;
